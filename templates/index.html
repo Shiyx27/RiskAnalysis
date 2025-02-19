@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Analysis Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        
+        h1, h2 {
+            color: #333;
+        }
+
+        form {
+            margin: 20px 0;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+            background: #fff;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+        table {
+            width: 90%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            background-color: white;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin: 20px;
+            padding: 12px 20px;
+            background-color: #ffc107;
+            color: black;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .download-btn:hover {
+            background-color: #e0a800;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Last Mile Risk Factor Analysis</h1>
+    
+    <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="file">
+        <input type="submit" value="Upload">
+    </form>
+
+    {% if file_ready %}
+
+    <h2>Top 20 Risk Hubs</h2>
+    <table>
+        <tr>
+            <th>Zone</th>
+            <th>Hub</th>
+            <th>Vehicles</th>
+            <th>Risk Score</th>
+        </tr>
+        {% for row in top_20_hubs %}
+        <tr>
+            <td>{{ row['Zone'] }}</td>
+            <td>{{ row['Hub'] }}</td>
+            <td>
+                {% for vehicle in row['Vehicle Number'].split(', ') %}
+                    <span class="tooltip">{{ vehicle }}
+                        <span class="tooltiptext">
+                            {% for data in grouped_data %}
+                                {% if data['Hub'] == row['Hub'] and data['Vehicle Number'] == vehicle %}
+                                    {{ data['Reasoning'] }}
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </span> 
+                {% endfor %}
+            </td>
+            <td>{{ row['Risk Value'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Top 20 Risk Hubs Per Zone</h2>
+    <table>
+        <tr>
+            <th>Zone</th>
+            <th>Hub</th>
+            <th>Vehicles</th>
+            <th>Risk Score</th>
+        </tr>
+        {% for row in top_20_per_zone %}
+        <tr>
+            <td>{{ row['Zone'] }}</td>
+            <td>{{ row['Hub'] }}</td>
+            <td>
+                {% set hub_vehicles = [] %}
+                {% for data in grouped_data %}
+                    {% if data['Hub'] == row['Hub'] and data['Zone'] == row['Zone'] %}
+                        {% if data['Vehicle Number'] not in hub_vehicles %}
+                            {% set _ = hub_vehicles.append(data['Vehicle Number']) %}
+                            <span class="tooltip">{{ data['Vehicle Number'] }}
+                                <span class="tooltiptext">{{ data['Reasoning'] }}</span>
+                            </span> 
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </td>
+            <td>{{ row['Risk Value'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <a href="/download" class="download-btn">Download Full Risk Analysis CSV</a>
+    
+    {% endif %}
+
+</body>
+</html>
